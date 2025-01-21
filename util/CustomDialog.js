@@ -19,7 +19,14 @@ const CustomDialog = ({ type, title, textBody, button, onPressButton }) => {
 
 // test
 // const CustomDialog = ({ type, title, textBody, button, onPressButton }) => {
-
+//     return (
+//         <Dialog
+//             type={type}
+//             title={title}
+//             textBody={textBody}
+//             button={button}
+//             onPressButton={onPressButton}
+//             titleStyle={styles
 const styles = StyleSheet.create({
     dialogTitle: {
         fontFamily: 'Sen-Bold', // Changer la police du titre
