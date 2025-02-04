@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import {
     StyleSheet,
     View,
@@ -10,30 +10,67 @@ import {
 } from 'react-native';
 import { Ionicons, AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import Global from "../util/Global";
+import { getUserData } from "../util/StorageUtils";
 
 export default function MenuScreen() {
+    const [userDataStorage, setUserDataStorage] = useState(null);
+    const [progressVisible, setProgressVisible] = useState(true);
+
     const router = useRouter();
+
+
+
+    useEffect(() => {
+        Promise.all([fetchUserData()])
+            .then(() => setProgressVisible(false))
+            .catch((error) =>
+                console.log("Erreur lors du chargement des données: " + error)
+            );
+    }, []);
+
+
+    const fetchUserData = async () => {
+        const data = await getUserData(); // Appel de la fonction externe
+        // console.log(data)
+        setUserDataStorage(data.user);
+    };
+
     const menuItems = [
         {
             id: 1,
             section: 1,
             title: 'Informations personnelles',
             icon: 'person-outline',
-            color: '#FF6B6B'
+            color: '#FF6B6B',
+            link: "/DetailsProfilScreen"
         },
         {
             id: 2,
             section: 1,
             title: 'Adresses',
             icon: 'location-outline',
-            color: '#4263EB'
+            color: '#4263EB',
+            link: "/MesAdressScreen"
+
+        },
+        {
+            id: 11,
+            section: 2,
+            title: 'Mes réservations',
+            icon: 'barbell',
+            color: '#51CF66',
+            link: "/MesReservationsSalles"
+
         },
         {
             id: 3,
             section: 2,
-            title: 'Réservations',
-            icon: 'calendar-outline',
-            color: '#4263EB'
+            title: 'Favoris',
+            icon: 'heart-outline',
+            color: '#4263EB',
+            link: "/ListFavorisScreen"
+
         },
         {
             id: 4,
@@ -41,54 +78,68 @@ export default function MenuScreen() {
             title: 'Statistiques et Performances',
             icon: 'stats-chart',
             color: '#4263EB',
-            hideArrow: true
+            hideArrow: true,
+            link: "/DetailsProfilScreen"
+
         },
         {
             id: 5,
             section: 2,
             title: 'Notifications',
             icon: 'notifications-outline',
-            color: '#FFB84D'
+            color: '#FFB84D',
+            link: "/DetailsProfilScreen"
+
         },
         {
             id: 6,
             section: 2,
             title: 'Mes Rencontres',
             icon: 'people-outline',
-            color: '#4263EB'
+            color: '#4263EB',
+            link: "/DetailsProfilScreen"
+
         },
         {
             id: 7,
             section: 3,
             title: 'FAQ',
             icon: 'help-circle-outline',
-            color: '#FF6B6B'
+            color: '#FF6B6B',
+            link: "/DetailsProfilScreen"
+
         },
         {
             id: 8,
             section: 3,
             title: 'Avis des utilisateurs',
             icon: 'star-outline',
-            color: '#51CF66'
+            color: '#51CF66',
+            link: "/DetailsProfilScreen"
+
         },
         {
             id: 9,
             section: 3,
             title: 'Paramètres',
             icon: 'settings-outline',
-            color: '#4263EB'
+            color: '#4263EB',
+            link: "/DetailsProfilScreen"
+
         },
         {
             id: 10,
             section: 4,
             title: 'Se déconnecter',
             icon: 'log-out-outline',
-            color: '#FF6B6B'
+            color: '#FF6B6B',
+            link: "/DetailsProfilScreen"
+
         }
     ];
 
     const MenuItem = ({ item }) => (
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => router.push(item.link)} >
             <View style={styles.menuItemLeft}>
                 <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
                     <Ionicons name={item.icon} size={22} color={item.color} />
@@ -120,17 +171,19 @@ export default function MenuScreen() {
                     <Text style={styles.headerTitle}>Profil</Text>
                 </View>
 
-                {/* Profile Info */}
-                <View style={styles.profileInfo}>
-                    <Image
-                        source={require('../assets/images/imageprofile.png')}
-                        style={styles.profileImage}
-                    />
-                    <View style={styles.profileTextContainer}>
-                        <Text style={styles.profileName}>Emine Bousselmi</Text>
-                        <Text style={styles.profileRole}>Basketteur Professionnel</Text>
+                {userDataStorage && (
+                    <View style={styles.profileInfo}>
+                        <Image
+                            source={{ uri: Global.BaseFile + userDataStorage.photoProfil }}
+                            style={styles.profileImage}
+                            resizeMode="cover"
+                        />
+                        <View style={styles.profileTextContainer}>
+                            <Text style={styles.profileName}>{userDataStorage.nom} {userDataStorage.prenom}</Text>
+                            <Text style={styles.profileRole}>{userDataStorage.pseudo}</Text>
+                        </View>
                     </View>
-                </View>
+                )}
 
                 {/* Menu Sections */}
                 {renderSection(menuItems.filter(item => item.section === 1))}
@@ -195,7 +248,8 @@ const styles = StyleSheet.create({
         fontSize: 21,
         marginBottom: 3,
         fontFamily: 'Sen-Bold',
-        color: '#32343E'
+        color: '#32343E',
+        textTransform: "capitalize"
     },
 
     profileRole: {

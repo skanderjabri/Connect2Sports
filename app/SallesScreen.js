@@ -248,7 +248,6 @@ const SallesScreen = () => {
                 data={filteredSalles}
                 keyExtractor={(item, index) => item._id ? item._id.toString() : `salle-${index}`}
                 renderItem={renderItem}
-                showsVerticalScrollIndicator={false}
                 contentContainerStyle={[
                     styles.listContainer,
                     filteredSalles.length === 0 && styles.emptyListContainer
@@ -257,6 +256,7 @@ const SallesScreen = () => {
                 onEndReachedThreshold={0.5}
                 ListEmptyComponent={renderEmptyState}
                 ListFooterComponent={renderFooter}
+                showsVerticalScrollIndicator={false}
             />
         </View>
     );

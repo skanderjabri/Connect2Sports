@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     View,
@@ -10,12 +10,18 @@ import {
     Platform,
     Dimensions,
     Image,
-    ScrollView
+    ScrollView,
+    StatusBar,
+    ActivityIndicator,
+
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
+import LoginUserApi from '../api/LoginUserApi';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 
 const { height, width } = Dimensions.get('window');
@@ -45,6 +51,7 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
 
@@ -58,28 +65,49 @@ export default function LoginScreen() {
             });
             return;
         }
+        setLoading(true);
         try {
-            if (email === 'skon@gmail.com' && password === '12345678') {
-                // Redirigez vers la page de profil
-                router.push("/");
-            } else {
+            const response = await LoginUserApi(email, password);
+            if (response.message === "utilisateur non trouvé") {
                 Dialog.show({
                     type: ALERT_TYPE.DANGER,
                     title: 'Erreur',
-                    textBody: 'Email ou mot de passe incorrect.',
+                    textBody: "Cet utilisateur n'existe pas dans le système.",
                     button: 'OK',
-                })
+                });
+                return;
+            }
+            if (response.message === "Mot de passe incorrect") {
+                Dialog.show({
+                    type: ALERT_TYPE.DANGER,
+                    title: 'Erreur',
+                    textBody: "Votre mot de passe est incorrect. Veuillez le vérifie",
+                    button: 'OK',
+                });
+                return;
+            }
+            if (response.message === "ok") {
+                // Convertir l'objet utilisateur en chaîne JSON
+                const userString = JSON.stringify(response.user);
 
+                // Enregistrer l'objet utilisateur dans AsyncStorage
+                await AsyncStorage.setItem('user', userString);
+
+                router.push("/HomeScren");
             }
         } catch (error) {
             Dialog.show({
                 type: ALERT_TYPE.DANGER,
                 title: 'Erreur',
-                textBody: 'Une erreur est survenue lors de la création de l\'avis',
+                textBody: 'Une erreur est survenue',
                 button: 'OK',
             });
         }
+        finally {
+            setLoading(false);
+        }
     };
+
 
 
     return (
@@ -89,6 +117,11 @@ export default function LoginScreen() {
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.content}
                 >
+                    <StatusBar
+                        barStyle={Platform.OS === "ios" ? "dark-content" : "dark-content"} // Texte foncé sur iOS, clair sur Android
+                        backgroundColor={Platform.OS === "android" ? "transparent" : "transparent"} // Bleu sur Android, transparent sur iOS
+                        translucent
+                    />
                     {/* Header avec dégradé orange */}
                     <LinearGradient
                         colors={['#FF9F43', '#FF9F43']}
@@ -147,8 +180,16 @@ export default function LoginScreen() {
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity style={styles.loginButton} onPress={handleLoginIn}>
-                            <Text style={styles.loginButtonText}>SE CONNECTER</Text>
+                        <TouchableOpacity
+                            style={styles.loginButton}
+                            onPress={handleLoginIn}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <Text style={styles.loginButtonText}>SE CONNECTER</Text>
+                            )}
                         </TouchableOpacity>
 
                         <View style={styles.signupContainer}>
@@ -174,7 +215,7 @@ export default function LoginScreen() {
                     </ScrollView>
                 </KeyboardAvoidingView>
             </SafeAreaView>
-        </AlertNotificationRoot >
+        </AlertNotificationRoot>
 
     );
 }
@@ -183,6 +224,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+
     },
     content: {
         flex: 1,

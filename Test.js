@@ -1,166 +1,176 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-    StyleSheet,
     View,
     Text,
-    TextInput,
+    StyleSheet,
     TouchableOpacity,
     SafeAreaView,
-    KeyboardAvoidingView,
-    Platform,
-    Dimensions
+    StatusBar,
+    Platform
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle, G } from 'react-native-svg';
+import { FontAwesome } from "@expo/vector-icons";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { ALERT_TYPE, Toast } from 'react-native-alert-notification';
 
-const { height, width } = Dimensions.get('window');
+const ConfirmationSalle = () => {
+    const router = useRouter();
+    const { SalleID } = useLocalSearchParams();
 
-const BackgroundDecorations = () => (
-    <View style={StyleSheet.absoluteFill}>
-        <Svg height="100%" width="100%" style={StyleSheet.absoluteFill}>
-            {/* Rayons soleil dans le coin supérieur gauche */}
-            <G>
-                {[...Array(12)].map((_, i) => (
-                    <Path
-                        key={`ray-${i}`}
-                        d="M0,0 L30,30"
-                        stroke="rgba(255,255,255,0.15)"
-                        strokeWidth="2"
-                        transform={`translate(40, 40) rotate(${i * 30})`}
-                    />
-                ))}
-            </G>
-
-            {/* Points formant une courbe */}
-            <Path
-                d={`M40,${height/6} C ${width/3},${height/4} ${width*2/3},${height/5} ${width-40},${height/6}`}
-                stroke="transparent"
-                fill="none"
-                strokeDasharray="1,12"
-                id="motionPath"
-            />
-            {[...Array(15)].map((_, i) => (
-                <Circle
-                    key={`dot-${i}`}
-                    r="3"
-                    fill="rgba(255,255,255,0.2)"
-                >
-                    <animateMotion
-                        dur="0.1"
-                        begin="0s"
-                        fill="freeze"
-                        path={`M40,${height/6} C ${width/3},${height/4} ${width*2/3},${height/5} ${width-40},${height/6}`}
-                        keyPoints={`${i/14};${i/14}`}
-                        keyTimes="0;1"
-                    />
-                </Circle>
-            ))}
-        </Svg>
-    </View>
-);
-
-export default function LoginScreen() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
+    const handleConfirmation = () => {
+        Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: 'Félicitations',
+            textBody: 'Votre participation a été confirmée avec succès!',
+        });
+        setTimeout(() => router.back(), 2000);
+    };
 
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.content}
+            <StatusBar
+                barStyle="dark-content"
+                backgroundColor="transparent"
+                translucent
+            />
+
+            <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => router.back()}
             >
-                <LinearGradient
-                    colors={['#FF9F5A', '#FF8A3D']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.header}
-                >
-                    <BackgroundDecorations />
-                    <Text style={styles.title}>Se connecter</Text>
-                    <Text style={styles.subtitle}>
-                        Veuillez vous connecter à votre compte existant
-                    </Text>
-                </LinearGradient>
+                <FontAwesome name="arrow-left" size={24} color="#1a1a1a" />
+            </TouchableOpacity>
 
-                <View style={styles.form}>
-                    {/* Le reste du code reste identique */}
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>EMAIL :</Text>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="IskanderJabri@gmail.com"
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                        />
+            <View style={styles.content}>
+                <View style={styles.iconContainer}>
+                    <FontAwesome name="handshake-o" size={60} color="#FF8C00" />
+                </View>
+
+                <Text style={styles.title}>Rejoignez-nous!</Text>
+
+                <View style={styles.infoContainer}>
+                    <View style={styles.infoItem}>
+                        <FontAwesome name="check-circle" size={24} color="#4CAF50" />
+                        <Text style={styles.infoText}>Accès à tous les équipements</Text>
                     </View>
-
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>MOT DE PASSE :</Text>
-                        <View style={styles.passwordContainer}>
-                            <TextInput
-                                style={[styles.input, styles.passwordInput]}
-                                placeholder="123456789"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
-                            />
-                            <TouchableOpacity
-                                onPress={() => setShowPassword(!showPassword)}
-                                style={styles.eyeIcon}
-                            >
-                                <Ionicons
-                                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                                    size={24}
-                                    color="#666"
-                                />
-                            </TouchableOpacity>
-                        </View>
+                    <View style={styles.infoItem}>
+                        <FontAwesome name="users" size={24} color="#FF8C00" />
+                        <Text style={styles.infoText}>Communauté active et dynamique</Text>
                     </View>
-
-                    <View style={styles.optionsContainer}>
-                        <View style={styles.checkboxContainer}>
-                            <TouchableOpacity style={styles.checkbox} />
-                            <Text style={styles.checkboxLabel}>Souviens-toi</Text>
-                        </View>
-                        <TouchableOpacity>
-                            <Text style={styles.forgotPassword}>Mot de passe oublié</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <TouchableOpacity style={styles.loginButton}>
-                        <Text style={styles.loginButtonText}>SE CONNECTER</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.signupContainer}>
-                        <Text style={styles.signupText}>Vous n'avez pas de compte ? </Text>
-                        <TouchableOpacity>
-                            <Text style={styles.signupLink}>S'INSCRIRE</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    <Text style={styles.orText}>Ou</Text>
-
-                    <View style={styles.socialContainer}>
-                        <TouchableOpacity style={[styles.socialButton, styles.facebookButton]}>
-                            <Ionicons name="logo-facebook" size={24} color="white" />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.socialButton, styles.googleButton]}>
-                            <Ionicons name="logo-google" size={24} color="white" />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={[styles.socialButton, styles.appleButton]}>
-                            <Ionicons name="logo-apple" size={24} color="white" />
-                        </TouchableOpacity>
+                    <View style={styles.infoItem}>
+                        <FontAwesome name="trophy" size={24} color="#FFD700" />
+                        <Text style={styles.infoText}>Atteignez vos objectifs avec nous</Text>
                     </View>
                 </View>
-            </KeyboardAvoidingView>
+
+                <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={handleConfirmation}
+                >
+                    <Text style={styles.confirmButtonText}>Confirmer ma participation</Text>
+                    <FontAwesome name="check" size={24} color="#FFF" />
+                </TouchableOpacity>
+            </View>
         </SafeAreaView>
     );
-}
+};
 
 const styles = StyleSheet.create({
-    // ... Les styles restent les mêmes ...
+    container: {
+        flex: 1,
+        backgroundColor: '#fff',
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    },
+    backButton: {
+        padding: 15,
+    },
+    content: {
+        flex: 1,
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    iconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#FFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 30,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 5,
+            },
+        }),
+    },
+    title: {
+        fontSize: 28,
+        fontFamily: "Sen-Bold",
+        color: '#1a1a1a',
+        marginBottom: 30,
+        textAlign: 'center',
+    },
+    infoContainer: {
+        width: '100%',
+        marginBottom: 40,
+    },
+    infoItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        padding: 20,
+        borderRadius: 15,
+        marginBottom: 15,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+            },
+            android: {
+                elevation: 3,
+            },
+        }),
+    },
+    infoText: {
+        fontSize: 16,
+        fontFamily: "Sen-Regular",
+        color: '#1a1a1a',
+        marginLeft: 15,
+        flex: 1,
+    },
+    confirmButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FF8C00',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 15,
+        gap: 10,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 6,
+            },
+        }),
+    },
+    confirmButtonText: {
+        color: '#FFF',
+        fontSize: 18,
+        fontFamily: "Sen-Bold",
+    },
 });
+
+export default ConfirmationSalle;

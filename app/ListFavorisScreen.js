@@ -1,23 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator, Image, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator, Image, ScrollView, Platform, StatusBar } from 'react-native';
 import { AntDesign, FontAwesome } from '@expo/vector-icons'; // Import des icônes Expo
 import { useRouter } from "expo-router";
 import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification'; // Import de l'alerte personnalisée
 import GetAllSalleInFavorisByUserApi from '../api/GetAllSalleInFavorisByUserApi';
 import DeleteSalleFromFavoriListeApi from '../api/DeleteSalleFromFavoriListeApi';
+import GetUsersInFavorisListeApi from '../api/GetUsersInFavorisListeApi';
+import DeleteUserFromFavoriListeApi from '../api/DeleteUserFromFavoriListeApi';
+import Global from '../util/Global';
+import { getUserData } from '../util/StorageUtils';
+
 
 const ListFavorisScreen = () => {
     const [sallesFavoris, setSallesFavoris] = useState([]);
+    const [usersFavoris, setUsersFavoris] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        fetechSallesFavoris()
+        Promise.all([fetechSallesFavoris(), fetechUsersFavoris()])
             .then(() => setIsLoading(false))
-            .catch((error) => console.log("Erreur lors du chargement des données: " + error));
+            .catch((error) =>
+                console.log("Erreur lors du chargement des données: " + error)
+            );
     }, []);
 
-    const fetechSallesFavoris = () => {
-        let id = "6784e6e953de2713eb4df5b5";
+    const fetechSallesFavoris = async () => {
+        const data = await getUserData();
+
+        const id = data.user._id;
+
         return GetAllSalleInFavorisByUserApi(id)
             .then((response) => {
                 setSallesFavoris(response.favoris);
@@ -28,13 +39,30 @@ const ListFavorisScreen = () => {
             });
     };
 
+
+    const fetechUsersFavoris = async () => {
+        const data = await getUserData();
+
+        const id = data.user._id;
+        return GetUsersInFavorisListeApi(id)
+            .then((response) => {
+                setUsersFavoris(response.UsersFavorites);
+            })
+            .catch((error) => {
+                console.log("Erreur " + error);
+                throw error;
+            });
+    };
+
+
     const removeSalleFromFavoris = async (salleDeSportId) => {
-        let userId = "6784e6e953de2713eb4df5b5";
+        const data = await getUserData();
+
+        const userId = data.user._id;
 
         try {
             const response = await DeleteSalleFromFavoriListeApi(userId, salleDeSportId);
             if (response.message === "ok") {
-                // Afficher une alerte stylisée de succès
                 Dialog.show({
                     type: ALERT_TYPE.SUCCESS,
                     title: 'Succès',
@@ -43,9 +71,10 @@ const ListFavorisScreen = () => {
                     button: 'OK',
                     onPressButton: () => {
                         Dialog.hide();
-                        fetechSallesFavoris();
                     },
                 });
+                fetechSallesFavoris();
+
             }
         } catch (error) {
             console.log("Erreur lors de la suppression de la salle de sport: " + error);
@@ -58,6 +87,43 @@ const ListFavorisScreen = () => {
             });
         }
     };
+    const removeUserInFavoris = async (favoriUserID) => {
+        const data = await getUserData();
+
+        const userId = data.user._id;
+
+
+        try {
+            const response = await DeleteUserFromFavoriListeApi(userId, favoriUserID);
+            console.log(response)
+            if (response.message === "ok") {
+                Dialog.show({
+                    type: ALERT_TYPE.SUCCESS,
+                    title: 'Succès',
+                    textBody: "L'utilisateur a été retiré de vos favoris.",
+                    button: 'OK',
+
+                    onPressButton: () => {
+                        Dialog.hide();
+                    },
+
+                });
+                fetechUsersFavoris()
+
+            }
+        } catch (error) {
+            console.log("Erreur lors de la suppression de la salle de sport: " + error);
+            // Afficher une alerte stylisée d'erreur
+            Dialog.show({
+                type: ALERT_TYPE.DANGER,
+                title: 'Erreur',
+                textBody: "Une erreur est survenue lors de la suppression de l'utilisateur des favoris.",
+                button: 'OK',
+            });
+        }
+    };
+
+
 
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('salle');
@@ -134,8 +200,48 @@ const ListFavorisScreen = () => {
                             )}
 
                             {activeTab === 'user' && (
-                                <Text style={styles.welcomeText}>Bienvenue dans le user</Text>
-                            )}
+                                <ScrollView style={{ marginTop: 20 }}>
+                                    {usersFavoris.length > 0 ? (
+                                        usersFavoris.map((user) => (
+                                            <TouchableOpacity key={user._id} style={styles.card}
+                                            //  onPress={() => router.push(`/DetailsSalle/${salle._id}`)}
+                                            >
+                                                <Image source={{ uri: user.photoProfil }} style={styles.cardImage} />
+                                                <View style={styles.cardContent}>
+                                                    <Text style={styles.cardTitle}>{user.nom}{' '}{user.prenom}</Text>
+                                                    <View style={styles.cardInfo}>
+                                                        <FontAwesome name="map-marker" size={19} color="#FF7622" />
+                                                        <Text style={styles.cardText}>{user.adresse}</Text>
+                                                    </View>
+                                                    {/*
+                                              <View style={styles.cardInfo}>
+                                                    <FontAwesome name="map-marker" size={19} color="#FF7622" />
+                                                    <Text style={styles.cardText}>{user.adresse}</Text>
+                                                </View>
+                                                <View style={styles.cardInfo}>
+                                                    <FontAwesome name="phone" size={19} color="#FF7622" />
+                                                    <Text style={styles.cardText}>{user.telephone}</Text>
+                                                </View>
+                                            */}
+
+                                                </View>
+                                                <TouchableOpacity
+                                                    style={styles.deleteButton}
+                                                    onPress={() => removeUserInFavoris(user._id)}
+                                                >
+                                                    <AntDesign name="delete" size={24} color="#FF7622" />
+                                                </TouchableOpacity>
+                                            </TouchableOpacity>
+                                        ))
+                                    ) : (
+                                        <View style={styles.NoDataDiv}>
+                                            <FontAwesome name="exclamation-circle" size={50} color="#FF7622" />
+                                            <Text style={styles.noDataText}>Aucun utilisateur favori n'a été trouvé.
+                                            </Text>
+                                        </View>
+
+                                    )}
+                                </ScrollView>)}
                         </ScrollView>
                     )}
                 </View>
@@ -148,7 +254,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingTop: 10,
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     },
     headerContainer: {
         flexDirection: 'row',

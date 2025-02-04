@@ -18,6 +18,8 @@ import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-no
 import { AntDesign, Entypo } from '@expo/vector-icons';
 import GetReviewsBySalleApi from "../../api/GetReviewsBySalleApi";
 import CreateReviewSalleApi from "../../api/CreateReviewSalleApi";
+import { getUserData } from "../../util/StorageUtils";
+import Global from "../../util/Global";
 const ReviewsSalle = () => {
     const router = useRouter();
     const { SalleID } = useLocalSearchParams();
@@ -51,7 +53,10 @@ const ReviewsSalle = () => {
             return;
         }
         try {
-            let user = "6784e6e953de2713eb4df5b5"; // ID de l'utilisateur connecté
+            const data = await getUserData();
+
+            const user = data.user._id;
+
             const response = await CreateReviewSalleApi(user, SalleID, rating, comment);
             if (response.message === "ok") {
                 Dialog.show({
@@ -102,7 +107,7 @@ const ReviewsSalle = () => {
             <View style={styles.reviewItem}>
                 <View style={styles.reviewHeader}>
                     <View style={styles.userInfo}>
-                        <Image source={{ uri: review.user.photoProfil }} style={styles.userImage} />
+                        <Image source={{ uri: Global.BaseFile + review.user.photoProfil }} style={styles.userImage} />
                         <View style={styles.userDetails}>
                             <Text style={styles.userName}>{review.user.prenom} {review.user.nom}</Text>
                             <Text style={styles.reviewDate}>{date}</Text>
