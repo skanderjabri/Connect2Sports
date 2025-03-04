@@ -5,21 +5,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dd0e7632-4187-46cf-8783-5c0f9cc06390" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/CqqaptureLogo-removebg-preview1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Test.js" beforeDir="false" afterPath="$PROJECT_DIR$/Test.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.json" beforeDir="false" afterPath="$PROJECT_DIR$/app.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/DetailsSalle/[SalleID].js" beforeDir="false" afterPath="$PROJECT_DIR$/app/DetailsSalle/[SalleID].js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Test1.js" beforeDir="false" afterPath="$PROJECT_DIR$/Test1.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/GetUsersAproximitesApi.js" beforeDir="false" afterPath="$PROJECT_DIR$/api/GetUsersAproximitesApi.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/CompleteInformationsScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/CompleteInformationsScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/DetailsProfilScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/DetailsProfilScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/DetailsUser/[UserID].js" beforeDir="false" afterPath="$PROJECT_DIR$/app/DetailsUser/[UserID].js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/HomeScren.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/HomeScren.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/ListFavorisScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/ListFavorisScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/ListNotificationScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/ListNotificationScreen.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/LoginScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/LoginScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/LoginScreenTest.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/LoginScreenTest.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/MenuScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/MenuScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/SallesScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/SallesScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/MesAdressScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/MesAdressScreen.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/SignUpScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/SignUpScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/app/_layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/UsersScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/UsersScreen.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/BottomTabNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/util/BottomTabNavigation.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/util/Global.js" beforeDir="false" afterPath="$PROJECT_DIR$/util/Global.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util/StorageUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/util/StorageUtils.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +49,7 @@
     &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;ScreenRecorder.SavePath&quot;: &quot;C:\\device-2025-01-24-153936.webm&quot;,
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;com.android.tools.idea.streaming.emulator.zoom.toolbar.visible&quot;: &quot;false&quot;,
     &quot;dart.analysis.tool.window.visible&quot;: &quot;false&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;AndroidSdkUpdater&quot;,

@@ -1,4 +1,9 @@
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Dimensions, Image } from 'react-native';
+import {
+    View, Text, StyleSheet, SafeAreaView, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Dimensions, Image,
+    StatusBar,
+    Platform,
+    Modal
+} from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -6,9 +11,9 @@ import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-a
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import GetAllCategoriesApi from '../api/GetAllCategoriesApi';
-import SignUpUserApi from '../api/SignUpUserApi';
 import axios from 'axios';
 const { width } = Dimensions.get('window');
+import { getUserData } from "../util/StorageUtils";
 
 export default function CompleteInformationsScreen() {
     const { nom, prenom, email, password } = useLocalSearchParams();
@@ -21,25 +26,44 @@ export default function CompleteInformationsScreen() {
     const [niveauSportif, setNiveauSportif] = useState('');
     const [disponibilitesTimes, setDisponibilitesTimes] = useState([]);
     const [disponibilitesPlaces, setDisponibilitesPlaces] = useState([]);
-    const [newDisponibilite, setNewDisponibilite] = useState('');
     const [newLieuPrefere, setNewLieuPrefere] = useState('');
     const [loading, setLoading] = useState(false);
     const [sportsPratiques, setSportsPratiques] = useState([]);
     const [image, setImage] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [categories, setCategories] = useState([]);
-    const adresse = "Tunise , mhadmia ";
-    const coordonnees = {
+    const [adresse, setAdresse] = useState("Tunisie, Mhadmia");
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [selectedGovernorates, setSelectedGovernorates] = useState([]);
+    const [isGovernoratesModalVisible, setIsGovernoratesModalVisible] = useState(false);
+    const [coordonnees, setCoordonnees] = useState({
         longitude: 10.137857038377689,
         latitude: 36.793674,
-    }
+    });
+
     useEffect(() => {
-        Promise.all([fetchCategories()])
+        Promise.all([fetchCategories(), fetchUserData()])
             .then(() => setIsLoading(false))
             .catch((error) =>
                 console.log("Erreur lors du chargement des données: " + error)
             );
     }, []);
+
+    const fetchUserData = async () => {
+        const data = await getUserData(); // Appel de la fonction externe
+        if (data?.location) {
+            const newAdresse = `${data.location.address.country} ${data.location.address.city} ${data.location.address.subregion}`;
+            const newCoordonnees = {
+                longitude: data.location.coords.longitude,
+                latitude: data.location.coords.latitude,
+            };
+
+            // Mettre à jour les états
+            setAdresse(newAdresse);
+            setCoordonnees(newCoordonnees);
+        }
+    };
 
     const fetchCategories = async () => {
         try {
@@ -70,13 +94,6 @@ export default function CompleteInformationsScreen() {
 
         if (!result.canceled) {
             setImage(result.assets[0].uri);
-        }
-    };
-
-    const handleAddDisponibilite = () => {
-        if (newDisponibilite.trim()) {
-            setDisponibilitesTimes([...disponibilitesTimes, newDisponibilite]);
-            setNewDisponibilite('');
         }
     };
 
@@ -248,7 +265,196 @@ export default function CompleteInformationsScreen() {
         }
     };
 
-    return (
+    const DisponibiliteModal = ({ isVisible, onClose, onSelect }) => {
+        const joursSemaine = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+        const creneauxHoraires = ["08H-10H", "10H-12H", "12H-14H",
+            "14H-16H", "16H-18H", "18H-20H", "20H-220H", "22H-00H", "00H-02H"];
+
+        return (
+            <Modal
+                visible={isVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={onClose}
+            >
+                <View style={modalStyles.modalOverlay}>
+                    <LinearGradient
+                        colors={['#FFFFFF', '#F9F9F9']}
+                        style={modalStyles.modalContent}
+                    >
+                        <View style={modalStyles.headerRow}>
+                            <Text style={modalStyles.modalTitle}>Vos disponibilités</Text>
+                            <TouchableOpacity onPress={onClose} style={modalStyles.closeIconButton}>
+                                <AntDesign name="close" size={22} color="#181C2E" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={modalStyles.divider} />
+
+                        <Text style={modalStyles.sectionTitle}>Jour de la semaine</Text>
+                        <ScrollView
+                            horizontal={true}
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={modalStyles.daysScrollContent}
+                        >
+                            {joursSemaine.map((jour, index) => (
+                                <TouchableOpacity
+                                    key={index}
+                                    style={[
+                                        modalStyles.dayButton,
+                                        selectedDay === jour && modalStyles.selectedDayButton
+                                    ]}
+                                    onPress={() => setSelectedDay(jour)}
+                                >
+                                    <Text
+                                        style={[
+                                            modalStyles.dayText,
+                                            selectedDay === jour && modalStyles.selectedDayText
+                                        ]}
+                                    >
+                                        {jour}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+
+                        {selectedDay && (
+                            <>
+                                <Text style={modalStyles.sectionTitle}>Créneau horaire</Text>
+                                <View style={modalStyles.timeGrid}>
+                                    {creneauxHoraires.map((creneau, idx) => (
+                                        <TouchableOpacity
+                                            key={idx}
+                                            style={modalStyles.timeButton}
+                                            onPress={() => onSelect(`${selectedDay} ${creneau}`)}
+                                        >
+                                            <MaterialCommunityIcons name="clock-outline" size={16} color="#FF7622" style={modalStyles.timeIcon} />
+                                            <Text style={modalStyles.timeText}>{creneau}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </>
+                        )}
+
+                        <LinearGradient
+                            colors={['#FF7622', '#FF9A62']}
+                            style={modalStyles.confirmButtonGradient}
+                        >
+                            <TouchableOpacity
+                                style={modalStyles.confirmButton}
+                                onPress={onClose}
+                            >
+                                <Text style={modalStyles.confirmButtonText}>
+                                    {selectedDay ? "Confirmer" : "Fermer"}
+                                </Text>
+                            </TouchableOpacity>
+                        </LinearGradient>
+                    </LinearGradient>
+                </View>
+            </Modal>
+        );
+    };
+    const GovernoratesModal = ({ isVisible, onClose }) => {
+        const governorates = ["Tunis", "Ariana", "Manouba", "Ben Arous", "Nabeul", "Sfax", "Sousse"];
+
+        const handleToggleGovernorate = (governorate) => {
+            if (selectedGovernorates.includes(governorate)) {
+                setSelectedGovernorates(selectedGovernorates.filter(g => g !== governorate));
+            } else {
+                setSelectedGovernorates([...selectedGovernorates, governorate]);
+            }
+        };
+
+        return (
+            <Modal
+                visible={isVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={onClose}
+            >
+                <View style={modalStyles.modalOverlay}>
+                    <LinearGradient
+                        colors={['#FFFFFF', '#F9F9F9']}
+                        style={modalStyles.modalContent}
+                    >
+                        <View style={modalStyles.headerRow}>
+                            <Text style={modalStyles.modalTitle}>Vos lieux préférés</Text>
+                            <TouchableOpacity onPress={onClose} style={modalStyles.closeIconButton}>
+                                <AntDesign name="close" size={22} color="#181C2E" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={modalStyles.divider} />
+
+                        <Text style={modalStyles.sectionTitle}>Sélectionnez vos gouvernorats</Text>
+
+                        <View style={modalStyles.governoratesGrid}>
+                            {governorates.map((governorate, index) => (
+                                <TouchableOpacity
+                                    key={index}
+                                    style={[
+                                        modalStyles.governorateButton,
+                                        selectedGovernorates.includes(governorate) && modalStyles.selectedGovernorateButton
+                                    ]}
+                                    onPress={() => handleToggleGovernorate(governorate)}
+                                >
+                                    <MaterialCommunityIcons
+                                        name="map-marker"
+                                        size={16}
+                                        color={selectedGovernorates.includes(governorate) ? "#FFF" : "#FF7622"}
+                                        style={modalStyles.governorateIcon}
+                                    />
+                                    <Text
+                                        style={[
+                                            modalStyles.governorateText,
+                                            selectedGovernorates.includes(governorate) && modalStyles.selectedGovernorateText
+                                        ]}
+                                    >
+                                        {governorate}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <View style={modalStyles.selectedSection}>
+                            <Text style={modalStyles.sectionTitle}>Lieux sélectionnés</Text>
+                            <View style={modalStyles.selectedChipsContainer}>
+                                {selectedGovernorates.length > 0 ? (
+                                    selectedGovernorates.map((gov, idx) => (
+                                        <View key={idx} style={modalStyles.selectedChip}>
+                                            <Text style={modalStyles.selectedChipText}>{gov}</Text>
+                                            <TouchableOpacity
+                                                onPress={() => handleToggleGovernorate(gov)}
+                                                style={modalStyles.removeChipButton}
+                                            >
+                                                <AntDesign name="close" size={14} color="#FFF" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))
+                                ) : (
+                                    <Text style={modalStyles.noSelectionText}>Aucun lieu sélectionné</Text>
+                                )}
+                            </View>
+                        </View>
+
+                        <LinearGradient
+                            colors={['#FF7622', '#FF9A62']}
+                            style={modalStyles.confirmButtonGradient}
+                        >
+                            <TouchableOpacity
+                                style={modalStyles.confirmButton}
+                                onPress={onClose}
+                            >
+                                <Text style={modalStyles.confirmButtonText}>
+                                    Confirmer
+                                </Text>
+                            </TouchableOpacity>
+                        </LinearGradient>
+                    </LinearGradient>
+                </View>
+            </Modal>
+        );
+    }; return (
         <AlertNotificationRoot>
             <SafeAreaView style={styles.container}>
                 <LinearGradient
@@ -413,18 +619,26 @@ export default function CompleteInformationsScreen() {
                                     </TouchableOpacity>
                                 </View>
                             ))}
-                            <View style={styles.addContainer}>
-                                <TextInput
-                                    style={styles.addInput}
-                                    value={newDisponibilite}
-                                    onChangeText={setNewDisponibilite}
-                                    placeholder="Ajouter une disponibilité"
-                                />
-                                <TouchableOpacity onPress={handleAddDisponibilite}>
-                                    <Ionicons name="add-circle-outline" size={24} color="#51CF66" />
-                                </TouchableOpacity>
-                            </View>
+                            <TouchableOpacity
+                                style={styles.addButton}
+                                onPress={() => setIsModalVisible(true)}
+                            >
+                                <Text style={styles.addButtonText}>Ajouter une disponibilité</Text>
+                            </TouchableOpacity>
                         </View>
+
+                        <DisponibiliteModal
+                            isVisible={isModalVisible}
+                            onClose={() => {
+                                setIsModalVisible(false);
+                                setSelectedDay(null); // Réinitialiser le jour sélectionné
+                            }}
+                            onSelect={(selectedTime) => {
+                                setDisponibilitesTimes([...disponibilitesTimes, selectedTime]);
+                                setIsModalVisible(false);
+                                setSelectedDay(null); // Réinitialiser le jour sélectionné
+                            }}
+                        />
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>LIEUX PRÉFÉRÉS</Text>
                             {disponibilitesPlaces.map((place, index) => (
@@ -435,18 +649,26 @@ export default function CompleteInformationsScreen() {
                                     </TouchableOpacity>
                                 </View>
                             ))}
-                            <View style={styles.addContainer}>
-                                <TextInput
-                                    style={styles.addInput}
-                                    value={newLieuPrefere}
-                                    onChangeText={setNewLieuPrefere}
-                                    placeholder="Ajouter un lieu préféré"
-                                />
-                                <TouchableOpacity onPress={handleAddLieuPrefere}>
-                                    <Ionicons name="add-circle-outline" size={24} color="#51CF66" />
-                                </TouchableOpacity>
-                            </View>
+                            <TouchableOpacity
+                                style={styles.addButton}
+                                onPress={() => setIsGovernoratesModalVisible(true)}
+                            >
+                                <Text style={styles.addButtonText}>Ajouter un lieu préféré</Text>
+                            </TouchableOpacity>
                         </View>
+
+                        <GovernoratesModal
+                            isVisible={isGovernoratesModalVisible}
+                            onClose={() => {
+                                setIsGovernoratesModalVisible(false);
+                                setDisponibilitesPlaces(selectedGovernorates); // Mettre à jour les lieux préférés
+                            }}
+                            onSelect={(selectedGovernorates) => {
+                                setDisponibilitesPlaces(selectedGovernorates);
+                                setIsGovernoratesModalVisible(false);
+                            }}
+                        />
+
 
                         <View style={styles.inputGroup}>
                             <Text style={styles.label}>
@@ -490,7 +712,8 @@ export default function CompleteInformationsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FA',
+        backgroundColor: '#fff',
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     },
     headerGradient: {
         paddingTop: 20,
@@ -757,6 +980,212 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontFamily: 'Sen-Bold',
         textAlign: 'center',
-    }
+    },
+    addButton: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderRadius: 12,
+        padding: 15,
+        alignItems: 'center',
+        marginTop: 10,
+        borderColor: '#FF7622',
+    },
+    addButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontFamily: 'Sen-Bold',
+        color: '#FF7622',
+    },
+});
+const modalStyles = StyleSheet.create({
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(3px)',
+    },
+    modalContent: {
+        width: '90%',
+        backgroundColor: '#FFF',
+        borderRadius: 24,
+        padding: 24,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 10,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        elevation: 10,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontFamily: 'Sen-Bold',
+        color: '#181C2E',
+    },
+    closeIconButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#F6F6F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#E8ECF4',
+        marginBottom: 20,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontFamily: 'Sen-Bold',
+        color: '#181C2E',
+        marginBottom: 12,
+    },
+    daysScrollContent: {
+        paddingBottom: 20,
+    },
+    dayButton: {
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: '#F6F6F6',
+        borderRadius: 12,
+        marginRight: 12,
+        borderWidth: 1,
+        borderColor: '#E8ECF4',
+    },
+    selectedDayButton: {
+        backgroundColor: 'rgba(255, 118, 34, 0.1)',
+        borderColor: '#FF7622',
+    },
+    dayText: {
+        fontSize: 14,
+        fontFamily: 'Sen-Regular',
+        color: '#6B6E82',
+    },
+    selectedDayText: {
+        color: '#FF7622',
+        fontFamily: 'Sen-Bold',
+    },
+    timeGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        marginBottom: 24,
+    },
+    timeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '48%',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: '#F6F6F6',
+        borderRadius: 12,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#E8ECF4',
+    },
+    timeIcon: {
+        marginRight: 8,
+    },
+    timeText: {
+        fontSize: 14,
+        fontFamily: 'Sen-Regular',
+        color: '#6B6E82',
+    },
+    confirmButtonGradient: {
+        borderRadius: 16,
+        overflow: 'hidden',
+    },
+    confirmButton: {
+        paddingVertical: 16,
+        alignItems: 'center',
+    },
+    confirmButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontFamily: 'Sen-Bold',
+    },
+
+    governoratesGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        marginVertical: 16,
+    },
+    governorateButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '48%',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: '#F6F6F6',
+        borderRadius: 12,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: '#E8ECF4',
+    },
+    selectedGovernorateButton: {
+        backgroundColor: '#FF7622',
+        borderColor: '#FF7622',
+    },
+    governorateIcon: {
+        marginRight: 8,
+    },
+    governorateText: {
+        fontSize: 14,
+        fontFamily: 'Sen-Regular',
+        color: '#6B6E82',
+    },
+    selectedGovernorateText: {
+        color: '#FFF',
+        fontFamily: 'Sen-Bold',
+    },
+    selectedSection: {
+        marginTop: 8,
+        marginBottom: 20,
+    },
+    selectedChipsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 8,
+    },
+    selectedChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FF7622',
+        borderRadius: 20,
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        marginRight: 8,
+        marginBottom: 8,
+    },
+    selectedChipText: {
+        color: '#FFF',
+        fontSize: 14,
+        fontFamily: 'Sen-Bold',
+        marginRight: 6,
+    },
+    removeChipButton: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    noSelectionText: {
+        color: '#9EA3AE',
+        fontSize: 14,
+        fontFamily: 'Sen-Regular',
+        fontStyle: 'italic',
+    },
 
 });

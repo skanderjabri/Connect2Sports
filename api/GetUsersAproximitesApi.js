@@ -1,9 +1,9 @@
 import Global from "../util/Global";
 import axios from "axios";
 
-function GetUsersAproximitesApi(page, limit) {
+function GetUsersAproximitesApi(page, limit, latitude, longitude, distance) {
     try {
-        let link = Global.BaseUrl + `/user/getUsers?page=${page}&limit=${limit}`;
+        let link = Global.BaseUrl + `/user/getUsers?page=${page}&limit=${limit}&lat=${latitude}&lon=${longitude}&distance=${distance}`;
         return axios
             .get(link, {
                 headers: {

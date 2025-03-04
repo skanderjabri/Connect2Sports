@@ -1,19 +1,35 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+    View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, StatusBar,
+    Platform,
+    SafeAreaView,
+} from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { AntDesign, Entypo, Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import GetUserByIdApi from '../api/GetUserByIdApi';
 import Global from '../util/Global';
 import { getUserData } from '../util/StorageUtils';
+import GetReviewStatsByUserApi from '../api/GetReviewStatsByUserApi';
 export default function DetailsProfilScreen() {
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const router = useRouter();
-
+    const [averageRating, setaverageRating] = useState(null);
+    const [totalReviews, settotalReviews] = useState(null);
     useEffect(() => {
-        fetchUser();
+        loadData();
     }, []);
 
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            await Promise.all([fetchUser(), fetchStatReviews()]);
+        } catch (error) {
+            console.log("Erreur lors du chargement des données: " + error);
+        } finally {
+            setLoading(false);
+        }
+    };
     const fetchUser = async () => {
         const data = await getUserData(); // Appel de la fonction externe
 
@@ -23,10 +39,24 @@ export default function DetailsProfilScreen() {
             setUser(response.user);
         } catch (error) {
             console.log("Erreur lors de la récupération des données: " + error);
-        } finally {
-            setLoading(false);
         }
     };
+
+
+    const fetchStatReviews = async () => {
+        try {
+            const data = await getUserData();
+            const id = data?.user?._id;
+            if (id) {
+                const response = await GetReviewStatsByUserApi(id);
+                setaverageRating(response.averageRating);
+                settotalReviews(response.totalReviews);
+            }
+        } catch (error) {
+            console.log("Erreur " + error);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -45,7 +75,7 @@ export default function DetailsProfilScreen() {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.headerContainer}>
                 <View style={styles.leftHeader}>
@@ -80,15 +110,17 @@ export default function DetailsProfilScreen() {
                 {/* Section Avis */}
                 <View style={styles.reviewsSection}>
                     <View style={styles.reviewsHeader}>
-                        <Text style={styles.reviewsTitle}>Avis</Text>
-                        <TouchableOpacity>
+                        <Text style={styles.reviewsTitle}>Avis </Text>
+                        <TouchableOpacity
+                            onPress={() => router.push("/MesReviewsEvent")}
+                        >
                             <Text style={styles.viewAllButton}>Voir tous les avis</Text>
                         </TouchableOpacity>
                     </View>
                     <View style={styles.ratingContainer}>
                         <Entypo name="star" size={20} color="#FF7622" />
-                        <Text style={styles.ratingNumber}>4.9</Text>
-                        <Text style={styles.reviewCount}>Total 20 avis</Text>
+                        <Text style={styles.ratingNumber}>{averageRating}</Text>
+                        <Text style={styles.reviewCount}>Total {totalReviews} avis</Text>
                     </View>
                 </View>
 
@@ -185,7 +217,7 @@ export default function DetailsProfilScreen() {
                     </View>
                 </View>
             </ScrollView>
-        </View >
+        </SafeAreaView>
     );
 }
 
@@ -193,7 +225,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingTop: 10,
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     },
     headerContainer: {
         flexDirection: 'row',

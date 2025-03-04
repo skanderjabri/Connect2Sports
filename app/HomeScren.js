@@ -20,6 +20,10 @@ import { useRouter } from 'expo-router';
 import { getUserData } from "../util/StorageUtils";
 import BottomTabNavigation from "../util/BottomTabNavigation";
 import Global from "../util/Global";
+import GetMyNotificationCountNotReadApi from "../api/GetMyNotificationCountNotReadApi";
+import { useFocusEffect } from '@react-navigation/native';
+import GetPadelTerrainApi from "../api/GetPadelTerrainApi";
+const DEFAULT_DISTANCE = 15;
 
 export default function HomeScren() {
     const router = useRouter();
@@ -29,9 +33,30 @@ export default function HomeScren() {
     const [progressVisible, setProgressVisible] = useState(true);
     const [userDataStorage, setUserDataStorage] = useState(null);
     const [locationDataStorage, setlocationDataStorage] = useState(null);
+    const [unreadMessages, setUnreadMessages] = useState(0);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+
+    const [facilityCounts, setFacilityCounts] = useState({
+        padel: 8,
+        gym: 12,
+        football: 5,
+        ems: 3,
+        tennis: 7
+    });
+    const [userLocation, setUserLocation] = useState({
+        latitude: null,
+        longitude: null
+    });
+
 
     useEffect(() => {
-        Promise.all([fetechCategories(), fetechSalles(), fetechUsers(), fetchUserData()])
+        Promise.all([fetechCategories(),
+        fetechSalles(),
+        fetechUsers(),
+        fetchUserData(),
+        fetechNotificationNotReadByUser(),
+        ])
             .then(() => setProgressVisible(false))
             .catch((error) =>
                 console.log("Erreur lors du chargement des données: " + error)
@@ -50,6 +75,7 @@ export default function HomeScren() {
         return GetAllCategoriesApi()
             .then((response) => {
                 setCategories(response.categories);
+
             })
             .catch((error) => {
                 console.log("Erreur " + error);
@@ -68,16 +94,56 @@ export default function HomeScren() {
             });
     };
 
-    const fetechUsers = () => {
-        return GetUsersAproximitesApi(1, 8)
+
+    const fetechUsers = async () => {
+        const data = await getUserData();
+        if (data?.location?.coords) {
+            setUserLocation({
+                latitude: data.location.coords.latitude,
+                longitude: data.location.coords.longitude
+            });
+        }
+        // Récupérer l'ID de l'utilisateur connecté
+        const connectedUserId = data.user._id;
+
+        await GetUsersAproximitesApi(1, 9, userLocation.latitude, userLocation.longitude, DEFAULT_DISTANCE)
             .then((response) => {
-                setUsers(response.users);
+                // Filtrer les utilisateurs pour exclure l'utilisateur connecté
+                const filteredUsers = response.users.filter(user => user._id !== connectedUserId);
+                setUsers(filteredUsers); // Mettre à jour l'état avec les utilisateurs filtrés
+            })
+
+            .catch((error) => {
+                console.log("Erreur  " + error);
+                throw error;
+            });
+    };
+    useFocusEffect(
+        React.useCallback(() => {
+            // Appel initial
+            fetechNotificationNotReadByUser();
+
+            const interval = setInterval(() => {
+                fetechNotificationNotReadByUser();
+            }, 5000);
+
+            // Nettoyage lors du départ de l'écran
+            return () => clearInterval(interval);
+        }, [])
+    );
+    const fetechNotificationNotReadByUser = async () => {
+        const data = await getUserData();
+        return GetMyNotificationCountNotReadApi(data.user._id)
+            .then((response) => {
+                setUnreadNotifications(response.notifications);
             })
             .catch((error) => {
                 console.log("Erreur  " + error);
                 throw error;
             });
     };
+
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -86,104 +152,102 @@ export default function HomeScren() {
                 backgroundColor={Platform.OS === "android" ? "transparent" : "transparent"} // Bleu sur Android, transparent sur iOS
                 translucent
             />
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                style={{ flex: 1 }}
-            >
-                <ScrollView showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ flexGrow: 1 }} >
-                    <View style={styles.header}>
-                        <View style={styles.userInfo}>
-                            <TouchableOpacity style={styles.menuButton}>
-                                <Ionicons name="menu" size={24} color="black" />
-                            </TouchableOpacity>
-                            {userDataStorage && locationDataStorage && (
-                                <View>
-                                    <Text style={styles.userName}>{userDataStorage.nom}{" "}{userDataStorage.prenom}</Text>
-                                    <Text style={styles.location}>{locationDataStorage.address.country} {locationDataStorage.address.city} {locationDataStorage.address.subregion}  ▼</Text>
-                                </View>
-                            )}
-
+            <View style={styles.header}>
+                <View style={styles.userInfo}>
+                    <TouchableOpacity style={styles.menuButton}>
+                        <Ionicons name="menu" size={24} color="black" />
+                    </TouchableOpacity>
+                    {userDataStorage && locationDataStorage && (
+                        <View>
+                            <Text style={styles.userName}>{userDataStorage.nom}{" "}{userDataStorage.prenom}</Text>
+                            <Text style={styles.location}>{locationDataStorage.address.country} {locationDataStorage.address.city} {locationDataStorage.address.subregion}  ▼</Text>
                         </View>
-                        {userDataStorage && locationDataStorage && (
-
-                            <TouchableOpacity onPress={() => router.push("/DetailsProfilScreen")} >
-                                <View style={styles.avatar} >
-                                    <Image
-                                        source={{ uri: Global.BaseFile + userDataStorage.photoProfil }}
-                                        style={styles.avatarImage}
-                                    />
-                                </View>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-
-                    <Text style={styles.welcomeText}>Bienvenue Sur CONNECT2SPORT !</Text>
-
-                    <View style={styles.searchContainer}>
-                        <Ionicons name="search" size={20} color="gray" />
-                        <TextInput
-                            style={styles.searchInput}
-                            placeholder="Rechercher un terrain, sportif, catégorie"
-                            placeholderTextColor="#676767"
-                        />
-                    </View>
-
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Toutes Les Catégories</Text>
-                        <TouchableOpacity>
-                            <Text style={styles.seeAllText}>Voir tout <AntDesign name="caretright" size={11} color="#FF8C00" style={{ fontFamily: "Sen-Medium" }} /> </Text>
-                        </TouchableOpacity>
-                    </View>
-                    {!progressVisible && (
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            style={styles.categoriesContainer}
-                        >
-                            {categories.map((category) => (
-                                <TouchableOpacity
-                                    key={category._id}
-                                    style={styles.categoryButton}>
-                                    <Text style={styles.categoryIcon}>{category.icon}</Text>
-                                    <Text style={styles.categoryText}>{category.nom}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
                     )}
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Utilisateurs Suggérés</Text>
-                        <TouchableOpacity onPress={() => router.push("/UsersScreen")} >
-                            <Text style={styles.seeAllText}>Voir tout <AntDesign name="caretright" size={11} color="#FF8C00" style={{ fontFamily: "Sen-Medium" }} /></Text>
-                        </TouchableOpacity>
-                    </View>
-                    {!progressVisible && (
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            style={styles.usersContainer}
-                        >
-                            {users.map((user) => (
-                                <View key={user._id} style={styles.userCard}>
-                                    <Image
-                                        source={{
-                                            uri: Global.BaseFile + user.photoProfil,
-                                        }}
-                                        style={styles.userImage}
-                                    />
-                                    <Text style={styles.userName} numberOfLines={1}>{user.nom}{" "}{user.prenom}</Text>
-                                    <View style={styles.userSport}>
-                                        {user.sportsPratiques && user.sportsPratiques.length > 0
-                                            ? (
-                                                <>
-                                                    {user.sportsPratiques.slice(0, 2).map((sport, index) => (
-                                                        <Text key={index} style={styles.sportItem} numberOfLines={1}>
-                                                            <Text style={styles.sportIcon}>{sport.icon}</Text>
-                                                            {"  "}
-                                                            <Text style={styles.sportName}>{sport.nom}</Text>
-                                                        </Text>
-                                                    ))}
-                                                    {/*   
+
+                </View>
+                {userDataStorage && locationDataStorage && (
+
+                    <TouchableOpacity onPress={() => router.push("/DetailsProfilScreen")} >
+                        <View style={styles.avatar} >
+                            <Image
+                                source={{ uri: Global.BaseFile + userDataStorage.photoProfil }}
+                                style={styles.avatarImage}
+                            />
+                        </View>
+                    </TouchableOpacity>
+                )}
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ flexGrow: 1 }} >
+
+                <Text style={styles.welcomeText}>Bienvenue Sur CONNECT2SPORT !</Text>
+
+                {/* Remplacer TextInput par TouchableOpacity */}
+                <TouchableOpacity
+                    style={styles.searchContainer}
+                    onPress={() => router.push("/SearchScreen")} // Naviguer vers l'écran de recherche
+                >
+                    <Ionicons name="search" size={20} color="gray" />
+                    <Text style={styles.searchInput}>Rechercher un terrain, sportif, catégorie</Text>
+                </TouchableOpacity>
+
+
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Toutes Les Catégories</Text>
+                    <TouchableOpacity onPress={() => router.push("/AllCategories")}  >
+                        <Text style={styles.seeAllText}>Voir tout <AntDesign name="caretright" size={11} color="#FF8C00" style={{ fontFamily: "Sen-Medium" }} /> </Text>
+                    </TouchableOpacity>
+                </View>
+                {!progressVisible && (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.categoriesContainer}
+                    >
+                        {categories.map((category) => (
+                            <TouchableOpacity
+                                key={category._id}
+                                style={styles.categoryButton}>
+                                <Text style={styles.categoryIcon}>{category.icon}</Text>
+                                <Text style={styles.categoryText}>{category.nom}</Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                )}
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Utilisateurs Suggérés</Text>
+                    <TouchableOpacity onPress={() => router.push("/UsersScreen")} >
+                        <Text style={styles.seeAllText}>Voir tout <AntDesign name="caretright" size={11} color="#FF8C00" style={{ fontFamily: "Sen-Medium" }} /></Text>
+                    </TouchableOpacity>
+                </View>
+                {!progressVisible && (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.usersContainer}
+                    >
+                        {users.map((user) => (
+                            <View key={user._id} style={styles.userCard}>
+                                <Image
+                                    source={{
+                                        uri: Global.BaseFile + user.photoProfil,
+                                    }}
+                                    style={styles.userImage}
+                                />
+                                <Text style={styles.userName} numberOfLines={1}>{user.nom}{" "}{user.prenom}</Text>
+                                <View style={styles.userSport}>
+                                    {user.sportsPratiques && user.sportsPratiques.length > 0
+                                        ? (
+                                            <>
+                                                {user.sportsPratiques.slice(0, 2).map((sport, index) => (
+                                                    <Text key={index} style={styles.sportItem} numberOfLines={1}>
+                                                        <Text style={styles.sportIcon}>{sport.icon}</Text>
+                                                        {"  "}
+                                                        <Text style={styles.sportName}>{sport.nom}</Text>
+                                                    </Text>
+                                                ))}
+                                                {/*   
                                                       {user.sportsPratiques.length > 2 && (
                                                         <Text style={styles.moreSportsText}>
                                                             +{user.sportsPratiques.length - 2} autres
@@ -191,58 +255,154 @@ export default function HomeScren() {
                                                     )}
                                                  */}
 
-                                                </>
-                                            )
-                                            : <Text style={styles.infoText} numberOfLines={1} >Aucun sport pratiqué</Text>
-                                        }
-                                    </View>
-                                    <TouchableOpacity style={styles.profileButton}
-                                        onPress={() => router.push(`/DetailsUser/${user._id}`)}
-                                    >
-                                        <Text style={styles.profileButtonText}>Voir profil</Text>
-                                    </TouchableOpacity>
+                                            </>
+                                        )
+                                        : <Text style={styles.infoText} numberOfLines={1} >Aucun sport pratiqué</Text>
+                                    }
                                 </View>
+                                <TouchableOpacity style={styles.profileButton}
+                                    onPress={() => router.push(`/DetailsUser/${user._id}`)}
+                                >
+                                    <Text style={styles.profileButtonText}>Voir profil</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ))}
+                    </ScrollView>
+                )}
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Les installations sportives</Text>
+                </View>
+
+                {!progressVisible && (
+                    <View style={{ paddingHorizontal: 16 }}>
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            style={styles.facilitiesContainer}
+                        >
+                            <TouchableOpacity
+                                style={styles.facilityCard}
+                                onPress={() => router.push("/PadelTerrainsScreen")}>
+                                <View style={styles.facilityImageContainer}>
+                                    <Image
+                                        source={{ uri: "https://media.istockphoto.com/id/2163796732/fr/photo/padel-tennis-racket-sport-court-and-balls.jpg?s=612x612&w=0&k=20&c=5h_14sLc006HeghTHf2Doce_SZY8RiTOgAMBu5dp3Gk=" }}
+                                        style={styles.facilityImage}
+                                    />
+                                    <View style={styles.facilityIconContainer}>
+                                        <Text style={styles.facilityIcon}>🎾</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.facilityName}>Terrains de Padel</Text>
+                                <Text style={styles.facilityCount}>8 terrains disponibles</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.facilityCard}
+                                onPress={() => router.push("/SallesScreen")}>
+                                <View style={styles.facilityImageContainer}>
+                                    <Image
+                                        source={{ uri: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48" }}
+                                        style={styles.facilityImage}
+                                    />
+                                    <View style={styles.facilityIconContainer}>
+                                        <Text style={styles.facilityIcon}>💪</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.facilityName}>Salles de Sport</Text>
+                                <Text style={styles.facilityCount}>12 salles disponibles</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.facilityCard}
+                                onPress={() => router.push("/FootballTerrainsScreen")}>
+                                <View style={styles.facilityImageContainer}>
+                                    <Image
+                                        source={{ uri: "https://images.unsplash.com/photo-1575361204480-aadea25e6e68" }}
+                                        style={styles.facilityImage}
+                                    />
+                                    <View style={styles.facilityIconContainer}>
+                                        <Text style={styles.facilityIcon}>⚽</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.facilityName}>Terrains de Football</Text>
+                                <Text style={styles.facilityCount}>5 terrains disponibles</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.facilityCard}
+                                onPress={() => router.push("/SallesEms")}>
+                                <View style={styles.facilityImageContainer}>
+                                    <Image
+                                        source={{ uri: "https://images.unsplash.com/photo-1518611012118-696072aa579a" }}
+                                        style={styles.facilityImage}
+                                    />
+                                    <View style={styles.facilityIconContainer}>
+                                        <Text style={styles.facilityIcon}>⚡</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.facilityName}>Salles EMS</Text>
+                                <Text style={styles.facilityCount}>3 salles disponibles</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={styles.facilityCard}
+                                onPress={() => router.push("/TennisTerrain")}>
+                                <View style={styles.facilityImageContainer}>
+                                    <Image
+                                        source={{ uri: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0" }}
+                                        style={styles.facilityImage}
+                                    />
+                                    <View style={styles.facilityIconContainer}>
+                                        <Text style={styles.facilityIcon}>🎾</Text>
+                                    </View>
+                                </View>
+                                <Text style={styles.facilityName}>Courts de Tennis</Text>
+                                <Text style={styles.facilityCount}>7 courts disponibles</Text>
+                            </TouchableOpacity>
+                        </ScrollView>
+                    </View>
+                )}
+
+
+                <View style={styles.containerTerrain}>
+                    <View style={styles.headerTerrain}>
+                        <Text style={styles.headerTitleTerrain}>Salles de sport proches</Text>
+                        <TouchableOpacity onPress={() => router.push("/SallesScreen")}>
+                            <Text style={styles.headerLinkTerrain}>Voir tout <AntDesign name="caretright" size={11} color="#FF8C00" style={{ fontFamily: "Sen-Medium" }} /></Text>
+                        </TouchableOpacity>
+                    </View>
+                    {!progressVisible && (
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.scrollContainerTerrain}
+                        >
+                            {salles.map((s) => (
+                                <TouchableOpacity key={s._id} style={styles.cardTerrain}
+                                    onPress={() => router.push(`/DetailsSalle/${s._id}`)}>
+                                    <Image source={{ uri: s.photos[0] }} style={styles.imageTerrain} />
+                                    <View style={styles.cardContentTerrain}>
+                                        <Text style={styles.titleTerrain}>{s.nom}</Text>
+                                        <Text style={styles.descriptionTerrain} numberOfLines={2}>
+                                            {s.description}
+                                        </Text>
+                                        <View style={styles.infoRowTerrain}>
+                                            <View style={styles.infoItemTerrain}>
+                                                <Text>🚩</Text>
+                                                <Text style={styles.infoTextTerrain}>{s.adresse}</Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </TouchableOpacity>
                             ))}
                         </ScrollView>
                     )}
-                    <View style={styles.containerTerrain}>
-                        <View style={styles.headerTerrain}>
-                            <Text style={styles.headerTitleTerrain}>Salles de sport proches</Text>
-                            <TouchableOpacity onPress={() => router.push("/SallesScreen")}>
-                                <Text style={styles.headerLinkTerrain}>Voir tout <AntDesign name="caretright" size={11} color="#FF8C00" style={{ fontFamily: "Sen-Medium" }} /></Text>
-                            </TouchableOpacity>
-                        </View>
-                        {!progressVisible && (
-                            <ScrollView
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.scrollContainerTerrain}
-                            >
-                                {salles.map((s) => (
-                                    <TouchableOpacity key={s._id} style={styles.cardTerrain}
-                                        onPress={() => router.push(`/DetailsSalle/${s._id}`)}>
-                                        <Image source={{ uri: s.photos[0] }} style={styles.imageTerrain} />
-                                        <View style={styles.cardContentTerrain}>
-                                            <Text style={styles.titleTerrain}>{s.nom}</Text>
-                                            <Text style={styles.descriptionTerrain} numberOfLines={2}>
-                                                {s.description}
-                                            </Text>
-                                            <View style={styles.infoRowTerrain}>
-                                                <View style={styles.infoItemTerrain}>
-                                                    <Text>🚩</Text>
-                                                    <Text style={styles.infoTextTerrain}>{s.adresse}</Text>
-                                                </View>
-                                            </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        )}
-                    </View>
-                </ScrollView>
-
-            </KeyboardAvoidingView>
-            <BottomTabNavigation />
+                </View>
+            </ScrollView>
+            <BottomTabNavigation
+                unreadMessages={unreadMessages}
+                unreadNotifications={unreadNotifications}
+            />
         </SafeAreaView >
     );
 };
@@ -293,15 +453,18 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         margin: 16,
-        padding: 12,
+        padding: 22,
         backgroundColor: "#f5f5f5",
         borderRadius: 25,
     },
     searchInput: {
         marginLeft: 8,
         flex: 1,
-        fontFamily: "Sen-Regular"
+        fontFamily: "Sen-Regular",
+        color: "#676767",
+        fontSize: 15
     },
+
     sectionHeader: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -395,7 +558,7 @@ const styles = StyleSheet.create({
         fontFamily: "Sen-Medium"
     },
     containerTerrain: {
-        marginTop: 30,
+        marginTop: 10,
         paddingHorizontal: 16,
     },
     headerTerrain: {
@@ -417,7 +580,7 @@ const styles = StyleSheet.create({
     scrollContainerTerrain: {
         flexDirection: 'row',
         marginBottom: 20,
-        paddingBottom: 70,
+        paddingBottom: 70, // hedhyy nbadelhaa mba3eeed 
     },
     cardTerrain: {
         backgroundColor: '#fff',
@@ -490,6 +653,64 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 50, // Pour un avatar rond
     },
-
+    facilitiesContainer: {
+        //   paddingHorizontal: 12,
+        paddingBottom: 20,
+    },
+    facilityCard: {
+        width: 180,
+        marginHorizontal: 8,
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        overflow: "hidden",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    facilityImageContainer: {
+        position: "relative",
+        width: "100%",
+        height: 120,
+    },
+    facilityImage: {
+        width: "100%",
+        height: "100%",
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+    },
+    facilityIconContainer: {
+        position: "absolute",
+        top: 10,
+        right: 10,
+        backgroundColor: "rgba(255, 140, 0, 0.9)",
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    facilityIcon: {
+        fontSize: 20,
+    },
+    facilityName: {
+        fontSize: 15,
+        fontFamily: "Sen-Bold",
+        color: "#32343E",
+        paddingHorizontal: 12,
+        paddingTop: 12,
+        paddingBottom: 4,
+    },
+    facilityCount: {
+        fontSize: 12,
+        fontFamily: "Sen-Regular",
+        color: "#676767",
+        paddingHorizontal: 12,
+        paddingBottom: 12,
+    },
 });
 

@@ -1,46 +1,61 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 
-const BottomTabNavigation = () => {
+const BottomTabNavigation = ({ unreadMessages, unreadNotifications }) => {
     const router = useRouter();
-
+    
+  
     return (
         <View style={styles.container}>
             <View style={styles.bottomNav}>
                 {/* Grille */}
                 <TouchableOpacity
                     style={styles.tabButton}
-                    onPress={() => router.push("/ListFavorisScreen")}
+                    onPress={() => router.push("/CommunityScreen")}
                 >
-                    <Ionicons name="grid-outline" size={24} color="#666" />
+                    <Ionicons name="people-outline" size={29} color="#666" />
                 </TouchableOpacity>
 
-                {/* Menu */}
+                {/* Chat avec badge */}
                 <TouchableOpacity
                     style={styles.tabButton}
-                    onPress={() => router.push("/LoginScreen")}
+                    onPress={() => router.push("/ChatScreen")}
                 >
-                    <Ionicons name="menu-outline" size={24} color="#666" />
+                    <View>
+                        <Ionicons name="chatbubbles-outline" size={24} color="#666" />
+                        {unreadMessages > 0 && (
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{unreadMessages}</Text>
+                            </View>
+                        )}
+                    </View>
                 </TouchableOpacity>
 
                 {/* Home - Button principal */}
                 <TouchableOpacity
                     style={styles.homeButton}
-                    onPress={() => router.push("/SplashScreen")}
+                    onPress={() => router.push("/EvenementScreen")}
                 >
                     <View style={styles.homeButtonInner}>
-                        <Ionicons name="home-outline" size={28} color="white" />
+                        <Ionicons name="trophy-outline" size={28} color="white" />
                     </View>
                 </TouchableOpacity>
 
-                {/* Notifications */}
+                {/* Notifications avec badge */}
                 <TouchableOpacity
                     style={styles.tabButton}
                     onPress={() => router.push("/ListNotificationScreen")}
                 >
-                    <Ionicons name="notifications-outline" size={24} color="#666" />
+                    <View>
+                        <Ionicons name="notifications-outline" size={24} color="#666" />
+                        {unreadNotifications > 0 && (
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{unreadNotifications}</Text>
+                            </View>
+                        )}
+                    </View>
                 </TouchableOpacity>
 
                 {/* Profil */}
@@ -94,14 +109,26 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
-        elevation: 5,
-    }
+    },
+    badge: {
+        position: 'absolute',
+        right: -6,
+        top: -6,
+        backgroundColor: '#FF8C00',
+        minWidth: 18,
+        height: 18,
+        borderRadius: 9,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+    },
+    badgeText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
 });
 
 export default BottomTabNavigation;

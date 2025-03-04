@@ -1,21 +1,31 @@
 {
   "expo": {
-    "name": "connect2sports",
-    "slug": "connect2sports",
+    "name": "Connect2sport",
+    "slug": "connect2sport",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/splashscren.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splashscren.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/splashscren.png",
+        "backgroundColor": "#ffffff"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/splashscren.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.iskanderjabri.connect2sport"
     },
     "web": {
       "bundler": "metro",
@@ -34,7 +44,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "imageWidth": 500,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
@@ -42,11 +52,11 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Autorisez Skon à accéder à votre position en permanence et lorsque l'application est en cours d'utilisation."
+          "locationAlwaysAndWhenInUsePermission": "Autorisez à accéder à votre position en permanence et lorsque l'application est en cours d'utilisation."
         }
       ]
     ],
-     "experiments": {
+    "experiments": {
       "typedRoutes": true
     }
   }

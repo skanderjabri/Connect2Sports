@@ -11,7 +11,10 @@ import {
     TextInput,
     Dimensions,
     SafeAreaView,
-    TouchableWithoutFeedback
+    TouchableWithoutFeedback,
+    StatusBar,
+    Platform,
+
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
@@ -126,7 +129,7 @@ const ReviewsSalle = () => {
 
     return (
         <AlertNotificationRoot>
-            <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+            <SafeAreaView style={styles.containerPere}>
                 <View style={styles.container}>
                     <View style={styles.headerContainer}>
                         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -198,6 +201,12 @@ const ReviewsSalle = () => {
 };
 
 const styles = StyleSheet.create({
+    containerPere: {
+        flex: 1,
+        backgroundColor: '#fff',
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    },
+
     container: { flex: 1, backgroundColor: '#fff' },
     headerContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
     backButton: { width: 45, height: 45, backgroundColor: '#F4F5F7', borderRadius: 18, justifyContent: 'center', alignItems: 'center' },

@@ -22,3 +22,14 @@ export const getUserData = async () => {
         return null;
     }
 };
+
+export const removeUserData = async () => {
+    try {
+        await AsyncStorage.removeItem('user');
+       // await AsyncStorage.removeItem('LocationUser');
+        
+        // Supprime l'objet utilisateur
+    } catch (error) {
+        console.error("Erreur lors de la suppression des données utilisateur :", error);
+    }
+};

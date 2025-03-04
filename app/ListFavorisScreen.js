@@ -206,7 +206,7 @@ const ListFavorisScreen = () => {
                                             <TouchableOpacity key={user._id} style={styles.card}
                                             //  onPress={() => router.push(`/DetailsSalle/${salle._id}`)}
                                             >
-                                                <Image source={{ uri: user.photoProfil }} style={styles.cardImage} />
+                                                <Image source={{ uri: Global.BaseFile + user.photoProfil }} style={styles.cardImage} />
                                                 <View style={styles.cardContent}>
                                                     <Text style={styles.cardTitle}>{user.nom}{' '}{user.prenom}</Text>
                                                     <View style={styles.cardInfo}>

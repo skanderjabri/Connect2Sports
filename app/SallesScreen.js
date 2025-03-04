@@ -10,6 +10,10 @@ import {
     FlatList,
     Dimensions,
     ScrollView,
+    SafeAreaView,
+    StatusBar,
+    Platform,
+
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -123,8 +127,8 @@ const SallesScreen = () => {
 
     // Rendu d'un élément de la liste
     const renderItem = ({ item, index }) => (
-        <Animated.View
-            entering={FadeInDown.delay(index * 100)}
+        <View
+            // entering={FadeInDown.delay(index * 100)}
             style={styles.cardContainer}
             key={item._id}
         >
@@ -169,7 +173,7 @@ const SallesScreen = () => {
                     </View>
                 </View>
             </TouchableOpacity>
-        </Animated.View>
+        </View>
     );
 
     // [Suite de la première partie...]
@@ -196,7 +200,7 @@ const SallesScreen = () => {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
                     <AntDesign name="left" size={14} color="#181C2E" style={{ fontFamily: "Sen-Medium" }} />
@@ -258,7 +262,7 @@ const SallesScreen = () => {
                 ListFooterComponent={renderFooter}
                 showsVerticalScrollIndicator={false}
             />
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -266,7 +270,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingTop: 10,
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     },
     headerContainer: {
         flexDirection: 'row',

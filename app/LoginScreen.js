@@ -18,10 +18,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ALERT_TYPE, Dialog, AlertNotificationRoot } from 'react-native-alert-notification';
+import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-alert-notification';
 import LoginUserApi from '../api/LoginUserApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { BackHandler } from "react-native";
 
 
 const { height, width } = Dimensions.get('window');
@@ -54,10 +54,21 @@ export default function LoginScreen() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
+    useEffect(() => {
+        const backAction = () => {
+            return true; // Empêcher l'action de retour
+        };
 
+        const backHandler = BackHandler.addEventListener(
+            "hardwareBackPress",
+            backAction
+        );
+
+        return () => backHandler.remove(); // Nettoyer l'écouteur
+    }, []);
     const handleLoginIn = async () => {
         if (email.trim() === "" || password.trim() === "") {
-            Dialog.show({
+            Toast.show({
                 type: ALERT_TYPE.WARNING,
                 title: 'Attention',
                 textBody: 'Veuillez remplir tous les champs',
@@ -69,7 +80,7 @@ export default function LoginScreen() {
         try {
             const response = await LoginUserApi(email, password);
             if (response.message === "utilisateur non trouvé") {
-                Dialog.show({
+                Toast.show({
                     type: ALERT_TYPE.DANGER,
                     title: 'Erreur',
                     textBody: "Cet utilisateur n'existe pas dans le système.",
@@ -78,7 +89,7 @@ export default function LoginScreen() {
                 return;
             }
             if (response.message === "Mot de passe incorrect") {
-                Dialog.show({
+                Toast.show({
                     type: ALERT_TYPE.DANGER,
                     title: 'Erreur',
                     textBody: "Votre mot de passe est incorrect. Veuillez le vérifie",
@@ -96,7 +107,7 @@ export default function LoginScreen() {
                 router.push("/HomeScren");
             }
         } catch (error) {
-            Dialog.show({
+            Toast.show({
                 type: ALERT_TYPE.DANGER,
                 title: 'Erreur',
                 textBody: 'Une erreur est survenue',
@@ -139,7 +150,7 @@ export default function LoginScreen() {
                             <Text style={styles.label}>EMAIL :</Text>
                             <TextInput
                                 style={styles.input}
-                                placeholder="IskanderJabri@gmail.com"
+                                placeholder="Votre email"
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
@@ -152,7 +163,7 @@ export default function LoginScreen() {
                             <View style={styles.passwordContainer}>
                                 <TextInput
                                     style={[styles.input, styles.passwordInput]}
-                                    placeholder="123456789"
+                                    placeholder="Votre mot de passe"
                                     value={password}
                                     onChangeText={setPassword}
                                     secureTextEntry={!showPassword}
@@ -175,7 +186,7 @@ export default function LoginScreen() {
                                 <TouchableOpacity style={styles.checkbox} />
                                 <Text style={styles.checkboxLabel}>Souviens-toi</Text>
                             </View>
-                            <TouchableOpacity>
+                            <TouchableOpacity onPress={() => router.push("/ForgetPasswordScreen")}>
                                 <Text style={styles.forgotPassword}>Mot de passe oublié</Text>
                             </TouchableOpacity>
                         </View>
@@ -198,8 +209,8 @@ export default function LoginScreen() {
                                 <Text style={styles.signupLink}>S'INSCRIRE</Text>
                             </TouchableOpacity>
                         </View>
-
-                        <Text style={styles.orText}>Ou</Text>
+                        {/* 
+                       <Text style={styles.orText}>Ou</Text>
 
                         <View style={styles.socialContainer}>
                             <TouchableOpacity style={[styles.socialButton, styles.facebookButton]}>
@@ -212,6 +223,8 @@ export default function LoginScreen() {
                                 <Ionicons name="logo-apple" size={30} color="white" />
                             </TouchableOpacity>
                         </View>
+                    */}
+
                     </ScrollView>
                 </KeyboardAvoidingView>
             </SafeAreaView>

@@ -1,4 +1,8 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, TextInput } from 'react-native';
+import {
+    View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, StatusBar,
+    Platform,
+    SafeAreaView,
+} from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -196,7 +200,7 @@ export default function UpdateUserScreen() {
                     title: 'Succès',
                     textBody: 'Profil mis à jour avec succès!',
                     button: 'OK',
-                }); 
+                });
                 setTimeout(() => {
                     router.push('/DetailsProfilScreen'); // Naviguer après le toast
                 }, 1500); // Délai de 1.5 secondes pour laisser le toast s'afficher
@@ -271,7 +275,7 @@ export default function UpdateUserScreen() {
 
     return (
         <AlertNotificationRoot>
-            <View style={styles.container}>
+            <SafeAreaView style={styles.container}>
                 <View style={styles.headerContainer}>
                     <TouchableOpacity
                         style={styles.backButton}
@@ -453,7 +457,7 @@ export default function UpdateUserScreen() {
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
-            </View>
+            </SafeAreaView>
         </AlertNotificationRoot>
     );
 }
@@ -462,6 +466,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
     },
     headerContainer: {
         flexDirection: 'row',

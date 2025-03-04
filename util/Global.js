@@ -1,6 +1,8 @@
 const Global = {
-    BaseUrl: "http://192.168.1.16:9001/api",
-    BaseFile: "http://192.168.1.16:9001/Public/uploads/",
+    BaseUrl: "https://connect2sportsserver.vercel.app/api",
+    BaseFile: "http://mgsnixv.cluster031.hosting.ovh.net/uploadscc/",
+    BaseSocket: "http://192.168.1.16:9001",
+
 
 
 };

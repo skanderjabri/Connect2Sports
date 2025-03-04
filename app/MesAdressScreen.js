@@ -23,7 +23,7 @@ export default function MesAdressScreen() {
                     },
                 }
             );
-            console.log(response.data);
+//            console.log(response.data);
 
         } catch (error) {
             console.error('Erreur:', error);

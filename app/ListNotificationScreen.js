@@ -6,6 +6,9 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
+    SafeAreaView,
+    StatusBar,
+    Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from 'react';
@@ -89,7 +92,11 @@ export default function ListNotificationScreen() {
 
         return (
             <View key={item._id} style={[styles.notificationItem, item.lu === 0 ? styles.unreadNotification : null]}>
-                <Image source={{ uri: item.emetteur.photoProfil }} style={styles.avatar} />
+                <Image
+                    source={{
+                        uri: Global.BaseFile + item.emetteur.photoProfil
+                    }}
+                    style={styles.avatar} />
                 <View style={styles.notificationContent}>
                     <Text style={[styles.notificationText, item.lu === 0 ? styles.unreadText : null]}>
                         <Text style={styles.name}>{item.emetteur.nom} {item.emetteur.prenom} </Text>
@@ -103,7 +110,7 @@ export default function ListNotificationScreen() {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.headerContainer}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -128,14 +135,15 @@ export default function ListNotificationScreen() {
             ) : (
                 <EmptyState />
             )}
-        </View>
+        </SafeAreaView>
     );
 }
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingTop: 10,
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+
     },
     headerContainer: {
         flexDirection: 'row',

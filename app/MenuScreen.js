@@ -6,20 +6,19 @@ import {
     Image,
     TouchableOpacity,
     ScrollView,
+    StatusBar,
+    Platform,
     SafeAreaView,
 } from 'react-native';
-import { Ionicons, AntDesign } from '@expo/vector-icons';
+import { Ionicons, AntDesign, MaterialIcons, FontAwesome, Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Global from "../util/Global";
-import { getUserData } from "../util/StorageUtils";
+import { getUserData, removeUserData } from "../util/StorageUtils";
 
 export default function MenuScreen() {
     const [userDataStorage, setUserDataStorage] = useState(null);
     const [progressVisible, setProgressVisible] = useState(true);
-
     const router = useRouter();
-
-
 
     useEffect(() => {
         Promise.all([fetchUserData()])
@@ -29,11 +28,18 @@ export default function MenuScreen() {
             );
     }, []);
 
-
     const fetchUserData = async () => {
-        const data = await getUserData(); // Appel de la fonction externe
-        // console.log(data)
+        const data = await getUserData();
         setUserDataStorage(data.user);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await removeUserData();
+            router.push("/LoginScreen");
+        } catch (error) {
+            console.error("Erreur lors de la déconnexion :", error);
+        }
     };
 
     const menuItems = [
@@ -41,116 +47,142 @@ export default function MenuScreen() {
             id: 1,
             section: 1,
             title: 'Informations personnelles',
-            icon: 'person-outline',
+            icon: 'user',
+            iconType: 'feather', // Utiliser Feather pour cet icône
             color: '#FF6B6B',
             link: "/DetailsProfilScreen"
         },
+        /*
         {
             id: 2,
             section: 1,
             title: 'Adresses',
-            icon: 'location-outline',
+            icon: 'map-pin',
+            iconType: 'feather', // Utiliser Feather pour cet icône
             color: '#4263EB',
             link: "/MesAdressScreen"
-
+        },
+        */
+        {
+            id: 27,
+            section: 1,
+            title: 'Statistiques et performances',
+            icon: 'bar-chart',
+            iconType: 'feather', // Utiliser Feather pour cet icône
+            color: '#51CF66',
+            link: "/StatistiquesPerfermances"
         },
         {
             id: 11,
             section: 2,
             title: 'Mes réservations',
-            icon: 'barbell',
-            color: '#51CF66',
+            icon: 'calendar',
+            iconType: 'feather', // Utiliser Feather pour cet icône
+            color: '#FFB84D',
             link: "/MesReservationsSalles"
-
         },
         {
             id: 3,
             section: 2,
             title: 'Favoris',
-            icon: 'heart-outline',
-            color: '#4263EB',
+            icon: 'heart',
+            iconType: 'feather', // Utiliser Feather pour cet icône
+            color: '#FF6B6B',
             link: "/ListFavorisScreen"
-
         },
         {
             id: 4,
             section: 2,
-            title: 'Statistiques et Performances',
-            icon: 'stats-chart',
+            title: 'Invitations',
+            icon: 'user-plus',
+            iconType: 'feather', // Utiliser Feather pour cet icône
             color: '#4263EB',
-            hideArrow: true,
-            link: "/DetailsProfilScreen"
-
-        },
+            link: "/MesRequestsScreen"
+        }, 
         {
             id: 5,
             section: 2,
-            title: 'Notifications',
-            icon: 'notifications-outline',
+            title: 'Ami(e)s',
+            icon: 'users',
+            iconType: 'feather', // Utiliser Feather pour cet icône
             color: '#FFB84D',
-            link: "/DetailsProfilScreen"
-
+            link: "/ListAmisScreen"
         },
         {
             id: 6,
             section: 2,
-            title: 'Mes Rencontres',
-            icon: 'people-outline',
+            title: 'Mes événements',
+            icon: 'calendar',
+            iconType: 'feather', // Utiliser Feather pour cet icône
             color: '#4263EB',
-            link: "/DetailsProfilScreen"
-
+            link: "/MesEvenementsScreen"
+        },
+        {
+            id: 32,
+            section: 2,
+            title: 'Mes Participations',
+            icon: 'check-circle',
+            iconType: 'feather', // Utiliser Feather pour cet icône
+            color: '#51CF66',
+            link: "/MesParticipationScreen"
         },
         {
             id: 7,
             section: 3,
             title: 'FAQ',
-            icon: 'help-circle-outline',
+            icon: 'help-circle',
+            iconType: 'feather', // Utiliser Feather pour cet icône
             color: '#FF6B6B',
-            link: "/DetailsProfilScreen"
-
+            link: "/FaqQScreen"
         },
         {
             id: 8,
             section: 3,
             title: 'Avis des utilisateurs',
-            icon: 'star-outline',
-            color: '#51CF66',
-            link: "/DetailsProfilScreen"
-
+            icon: 'star',
+            iconType: 'feather', // Utiliser Feather pour cet icône
+            color: '#FFB84D',
+            link: "/AvisUsersApp"
         },
         {
             id: 9,
             section: 3,
-            title: 'Paramètres',
-            icon: 'settings-outline',
+            title: 'Contactez-nous',
+            icon: 'mail',
+            iconType: 'feather', // Utiliser Feather pour cet icône
             color: '#4263EB',
-            link: "/DetailsProfilScreen"
-
+            link: "/ContactezNous"
         },
         {
             id: 10,
             section: 4,
             title: 'Se déconnecter',
-            icon: 'log-out-outline',
+            icon: 'log-out',
+            iconType: 'feather', // Utiliser Feather pour cet icône
             color: '#FF6B6B',
-            link: "/DetailsProfilScreen"
-
+            onPress: handleLogout
         }
     ];
 
-    const MenuItem = ({ item }) => (
-        <TouchableOpacity style={styles.menuItem} onPress={() => router.push(item.link)} >
-            <View style={styles.menuItemLeft}>
-                <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
-                    <Ionicons name={item.icon} size={22} color={item.color} />
+    const MenuItem = ({ item }) => {
+        const IconComponent = item.iconType === 'feather' ? Feather : Ionicons; // Choisir le bon composant d'icône
+        return (
+            <TouchableOpacity
+                style={styles.menuItem}
+                onPress={item.onPress ? item.onPress : () => router.push(item.link)}
+            >
+                <View style={styles.menuItemLeft}>
+                    <View style={[styles.iconContainer, { backgroundColor: `${item.color}15` }]}>
+                        <IconComponent name={item.icon} size={22} color={item.color} />
+                    </View>
+                    <Text style={styles.menuItemText}>{item.title}</Text>
                 </View>
-                <Text style={styles.menuItemText}>{item.title}</Text>
-            </View>
-            {!item.hideArrow && (
-                <Ionicons name="chevron-forward" size={20} color="#C8C8C8" />
-            )}
-        </TouchableOpacity>
-    );
+                {!item.hideArrow && (
+                    <Ionicons name="chevron-forward" size={20} color="#C8C8C8" />
+                )}
+            </TouchableOpacity>
+        );
+    };
 
     const renderSection = (sectionItems) => (
         <View style={styles.section}>
@@ -162,29 +194,28 @@ export default function MenuScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView style={styles.scrollView}>
-                {/* Header */}
-                <View style={styles.headerContainer}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                        <AntDesign name="left" size={14} color="#181C2E" style={{ fontFamily: "Sen-Medium" }} />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Profil</Text>
-                </View>
+            {/* Header */}
+            <View style={styles.headerContainer}>
+                <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                    <AntDesign name="left" size={14} color="#181C2E" style={{ fontFamily: "Sen-Medium" }} />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Profil</Text>
+            </View>
 
-                {userDataStorage && (
-                    <View style={styles.profileInfo}>
-                        <Image
-                            source={{ uri: Global.BaseFile + userDataStorage.photoProfil }}
-                            style={styles.profileImage}
-                            resizeMode="cover"
-                        />
-                        <View style={styles.profileTextContainer}>
-                            <Text style={styles.profileName}>{userDataStorage.nom} {userDataStorage.prenom}</Text>
-                            <Text style={styles.profileRole}>{userDataStorage.pseudo}</Text>
-                        </View>
+            {userDataStorage && (
+                <View style={styles.profileInfo}>
+                    <Image
+                        source={{ uri: Global.BaseFile + userDataStorage.photoProfil }}
+                        style={styles.profileImage}
+                        resizeMode="cover"
+                    />
+                    <View style={styles.profileTextContainer}>
+                        <Text style={styles.profileName}>{userDataStorage.nom} {userDataStorage.prenom}</Text>
+                        <Text style={styles.profileRole}>{userDataStorage.pseudo}</Text>
                     </View>
-                )}
-
+                </View>
+            )}
+            <ScrollView style={styles.scrollView}>
                 {/* Menu Sections */}
                 {renderSection(menuItems.filter(item => item.section === 1))}
                 {renderSection(menuItems.filter(item => item.section === 2))}
@@ -199,7 +230,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        paddingTop: 10,
+        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
 
     },
     scrollView: {
@@ -225,25 +256,21 @@ const styles = StyleSheet.create({
         marginLeft: 12,
         fontFamily: "Sen-Bold",
     },
-
     profileInfo: {
-        flexDirection: 'row', // Aligner horizontalement
-        alignItems: 'center', // Centrer verticalement
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingVertical: 20,
-        paddingHorizontal: 20, // Ajouter un padding pour l'espacement
+        paddingHorizontal: 20,
     },
-
     profileImage: {
         width: 100,
         height: 100,
         borderRadius: 50,
-        marginRight: 15, // Ajouter de l’espace entre l’image et le texte
+        marginRight: 15,
     },
-
     profileTextContainer: {
-        flex: 1, // Permet au texte d'occuper tout l'espace disponible
+        flex: 1,
     },
-
     profileName: {
         fontSize: 21,
         marginBottom: 3,
@@ -251,14 +278,13 @@ const styles = StyleSheet.create({
         color: '#32343E',
         textTransform: "capitalize"
     },
-
     profileRole: {
         fontSize: 15,
         fontFamily: 'Sen-Regular',
         color: '#A0A5BA',
         marginTop: 5,
-
-    }, section: {
+    },
+    section: {
         backgroundColor: '#F6F8FA',
         borderRadius: 15,
         marginHorizontal: 20,
